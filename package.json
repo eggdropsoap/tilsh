@@ -21,7 +21,8 @@
 		"url": "git+https://github.com/eggdropsoap/tilsh.git"
 	},
 	"scripts": {
-		"test": "vitest"
+		"test": "vitest",
+		"bench": "vitest bench"
 	},
 	"devDependencies": {
 		"vitest": "^2.1.8"
