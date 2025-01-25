@@ -102,12 +102,12 @@ describe('pearson.next', () => {
     })
     
     test.skip.each(mockedPearsonArgs)
-    ('next should be faster than classic (h:%i,tri:%s)', (h,s) => {
+    ('next should be faster than classic (salt:%i,tri:%s)', (salt,s) => {
         expect(
-            profile(next,h,s),
-            `each: ${h}, ${s}`
+            profile(next,salt,s),
+            `each: ${salt}, ${s}`
         ).to.be.below(
-            profile(classic,h,s)
+            profile(classic,salt,s)
         )
     })    
 })
