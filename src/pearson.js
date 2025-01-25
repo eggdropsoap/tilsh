@@ -28,22 +28,25 @@ function validateTri(tri) {
     return tri;
 }
 
-export function classic(h,tri) {
-
+export function classic(salt,tri) {
     tri = validateTri(tri);
 
-    for (const byte of tri) {
+    let h = 0;
+    const quad = [salt, ...tri];
+
+    for (const byte of quad) {
         h = table[h ^ byte];
     }
     return h;
 }
 
-export default function next (h,tri) {
+export default function next (salt,tri) {
+    let h = 0;
     // const t = table;
 
     tri = validateTri(tri);
 
-    return table[table[table[h ^ tri[0]] ^ tri[1]] ^ tri[2]];
+    return table[table[table[table[h ^ salt] ^ tri[0]] ^ tri[1]] ^ tri[2]];
 }
 
 const pearson = next;

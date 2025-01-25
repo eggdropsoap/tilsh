@@ -5,8 +5,8 @@ import testData from './test-data/data.js'
 const headerLength = 'T1xxyyzz'.length;
 const offset = 3;
 const mockedPearsonArgs = [
-    [1,"abc"],
-    [2,"xyz"],
+    [2,"abc"],
+    [1,"xyz"],
     [3,"foo"],
     [5,"bar"],
     [5,"baz"],
@@ -46,19 +46,19 @@ describe('pearson behaviour', () => {
     })
 
     test(`pearson works with arrays`, () => {
-        const a = [1,[97,98,99]];
+        const a = [2,[97,98,99]];
         expect( () => 
             pearson(a[0],a[1])
         ).to.not.throw();
-        expect(pearson(a[0],a[1])).toBe(71);
+        expect(pearson(a[0],a[1])).toBe(119);
     })
 
     test(`pearson work with strings`, () => {
-        const a = [1,"abc"];
+        const a = [2,"abc"];
         expect( () => 
             pearson(a[0],a[1])
         ).to.not.throw();
-        expect(pearson(a[0],a[1])).toBe(71);
+        expect(pearson(a[0],a[1])).toBe(119);
     })
 
     test(`pearson throws when input is more than a triplet`, () => {
@@ -73,13 +73,13 @@ describe('pearson behaviour', () => {
 
     test(`pearson benchmarking closure works`, () => {
         expect(() => closure(next)).to.not.throw();
-        expect(closure(next)).toBe(71);
+        expect(closure(next)).toBe(14);
     })
 })
 
 
 
-describe.skip('pearson.next', () => {
+describe('pearson.next', () => {
     test(`pearson next and classic should be the same`, () => {
         const enc = new TextEncoder();
         const start = 282;
@@ -101,7 +101,7 @@ describe.skip('pearson.next', () => {
         }
     })
     
-    test.each(mockedPearsonArgs)
+    test.skip.each(mockedPearsonArgs)
     ('next should be faster than classic (h:%i,tri:%s)', (h,s) => {
         expect(
             profile(next,h,s),
@@ -112,3 +112,14 @@ describe.skip('pearson.next', () => {
     })    
 })
 
+describe('pearson data processing', () => {
+    test(`svg1 checksum pearson(0,32,103,0) step`, () => {
+        expect(classic(0,[32,103,0])).toBe(220)
+    })
+
+    test(`pearson(2,101,100,99) = 90`, () => {
+        expect(
+            classic(2,[101,100,99])
+        ).toBe(90);
+    })
+})
