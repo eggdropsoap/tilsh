@@ -1,3 +1,4 @@
 /node_modules/
 /c-ref/
 /pnpm-lock.yaml
+.vscode/c_cpp_properties.json
