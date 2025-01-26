@@ -24,55 +24,39 @@ export default function hash (s) {
     if (inputLength < minSize) throw new LengthError(
         `Input byte length too small: ${inputLength} < ${minSize}`
     );
-    // console.log(`u8array\n[ ${u8array} ]\n`);
 
     // 1. Process the byte string `u8array` with sliding window 5-wide into 32-bit Pearson buckets
     // 1a. Collect the self-permuting checksum along the way
     let checksum = 0;
     const salts = [2,3,5,7,11,13]
     const buckets = new Uint32Array(bucketArraySize);
-    // console.log(`buckets before\n[ ${buckets} ]\n`);
-    let bucketEntryCounter = 0; // testing
+
     for (let windowEnd = windowSize; windowEnd <= inputLength; windowEnd++) {
         const windowStart = windowEnd - windowSize;
-        // console.log(`windowStart ${windowStart} of ${inputLength} length\n`);
+
         const checkTri = [u8array[windowEnd-1],u8array[windowEnd-2],checksum];
         checksum = pearson(0,checkTri);
+
         for (const i of [0,1,2,3,4,5]) {
             const triplet = selectTriplet(i,u8array.slice(windowStart,windowEnd));
-            // console.log(`triplet: ${triplet}`)
-            // console.log(`pearson of triplet: ${pearson(i,triplet)}`)
-            const r_temp = pearson(salts[i],triplet);
-            const t_temp = triplet.toString();
             buckets[pearson(salts[i],triplet)]++;
-            bucketEntryCounter++;   // testing
-            // console.log('\n')
         }
     }
-    // console.log(`entries made into all buckets: ${bucketEntryCounter}`)
-    // console.log(`buckets after\n[ ${buckets} ]\n`);
-    // console.log(`buckets sorted\n[ ${buckets.toSorted()} ]\n`);
 
     // 2. calculate the quartiles
     let q1, q2, q3;
     [q1,q2,q3] = quartiles(buckets);
-    // console.log("q1 %d, q2 %d, q3 %d",q1,q2,q3);
-    // console.log(buckets);
 
     // 3. construct the digest header
-    // let header = digestHeader(buckets,checksum,inputLength,q1,q2,q3);
-    let header = [
+    const header = [
         headerVersion(TLSHVersion),
         ChecksumHex(checksum),
         LengthLog(inputLength),
         QRatios(q1,q2,q3)
     ].join('');
-    console.log(ByteToHex(checksum));
 
     // 4. construct the digest body
     const body = digestBody(buckets,q1,q2,q3);
-    // console.log("RESULT: %s", body);
-
 
     return `${header}${body}`;
 }
@@ -120,37 +104,14 @@ function QRatios (q1,q2,q3) {
     const q1_ratio = Math.floor(q1*100/q3) % 16;
     const q2_ratio = Math.floor(q2*100/q3) % 16;
 
-    let quartileByte = q1_ratio << 4;
-    quartileByte += q2_ratio;
+    const quartileByte = (q1_ratio << 4) + q2_ratio;
     return ByteToHex(quartileByte);
 }
 
-// function digestHeader(buckets,check,len,q1,q2,q3) {
-//     // if (q3 == 0) throw new Error("Insufficient complexity");
-
-//     // const version = 'T' + TLSHVersion.toString();
-//     // const checksumByte = '••';
-//     const checksumByte = ByteToHex(check,true);
-//     const lengthLogByte = LengthLog(len);
-//     // const q1_ratio = Math.floor(q1*100/q3) % 16;
-//     // const q2_ratio = Math.floor(q2*100/q3) % 16;
-//     // let quartileByte = q1_ratio << 4;
-//     // quartileByte += q2_ratio;
-//     //stub
-//     return [
-//         headerVersion(TLSHVersion),
-//         checksumByte,
-//         LengthLog(len),
-//         qRatios(q1,q2,q3)
-//     ].join('');
-// }
-
 function digestBody (buckets,q1,q2,q3) {
-    // console.log("digestBody args: ", arguments);
     const len = buckets.length;
-    let accumulator = new Uint8ClampedArray(digestByteLength);
-    let hexString = '';
-    let byteHex = '';
+    const accumulator = new Uint8ClampedArray(digestByteLength);
+
     for (let bi = 0; bi < len; bi+=4) {
         let byte = 0;
         for (let j = 0; j < 4; j++) {
@@ -162,25 +123,12 @@ function digestBody (buckets,q1,q2,q3) {
     
             if ( emit === null ) throw new Error("digest body construction failed to generate bits");
             byte += emit << (j*2);  // the byte is constructed little-endian, right-to-left...
-            // console.log(`    bucket[${bi+j}]: ${buckets[bi+j]}\temit: ${emit}\tbyte_acc: ${byte}\tbinary: ${byte.toString(2).padStart(2*(j+1),'0').padStart(8,' ')}`)
         }
-        let index = Math.floor(bi/4);
-        // console.log(`Iteration output index: ${index}`)
-        // ...and the hash is also constructed little-endian / right-to-left / end-to-start
-        accumulator[index] = (byte);
-        // if (accumulator.length % 2 == 0) {
-        //     // byteHex = byte.toString(16).padStart(2,'0');
-        //     byteHex = ByteToHex(byte);
-        // }
-        // hexString = hexString.concat(byteHex);
-        // console.log(`^^ loop ${bi}: byte is ${byte}, byte hex is ${byteHex},\naccumulator is ${accumulator} (length ${accumulator.length}),\nhexString is ${hexString} (length ${hexString.length})\n`);
+        const byteIndex = Math.floor(bi/4);
+        accumulator[byteIndex] = (byte);
     }
 
-    hexString = accumulator.reduce((a,v) => { return ByteToHex(v) + a },'')    // int8 to hexString, accumulated in reverse
-
-    // let summing = accumulator.reduce((a,v) => {return a + v},0);
-    // let averaging = summing / accumulator.length;
-    // console.log(`average of bytes: ${averaging} (sum ${summing})`)
+    const hexString = accumulator.reduce((a,v) => { return ByteToHex(v) + a },'')    // uint8 to hexString, accumulated in reverse
     return hexString;
 }
 
@@ -197,9 +145,9 @@ function selectTriplet(i,arr){
     function select(pattern,pos) {
         return patterns[pattern][pos];
     }
-    // console.log(`select from array: ${arr}`)
+
     const triplet = new Uint8Array(3);
-    triplet[0] = arr[4];
+    triplet[0] = arr[4];    // optimisation, since select(i,0) == 4 always
     triplet[1] = arr[select(i,1)];
     triplet[2] = arr[select(i,2)];
 
@@ -211,12 +159,11 @@ function quartiles (bi) {
     if (len % 2 == 1) throw new Error('buckets array is not divisible by 2');
 
     const b = bi.toSorted();
-    // console.log(b);
+
     const centre = Math.floor(len / 2);
     const centreL = Math.floor(centre / 2);
     const centreR = centre + centreL;
-    console.log("Centres: %d %d %d",centreL,centre,centreR);
-
+    
     // A note about the algorithm's implementation.
     //
     // The paper defines q-values such that they're each < percentage of buckets.
@@ -224,9 +171,9 @@ function quartiles (bi) {
     // the algo uses the value of the bucket to the lower side as the q-value.
     // Though the mathematical average satisfies the paper's definition, it results in wrong q-ratios.
 
-    const q1 = b[centreL-1]; console.log(`q1 ${q1} (from ${b[centreL-2]},${b[centreL-1]},${b[centreL]})`);
-    const q2 = b[centre -1]; console.log(`q2 ${q2} (from ${b[centre-2]},${b[centre-1]},${b[centre]})`);
-    const q3 = b[centreR-1]; console.log(`q3 ${q3} (from ${b[centreR-2]},${b[centreR-1]},${b[centreR]})`);
+    const q1 = b[centreL-1];
+    const q2 = b[centre -1];
+    const q3 = b[centreR-1];
     return [q1, q2, q3];
 }
 

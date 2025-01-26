@@ -20,9 +20,7 @@ const table = [
 function validateTri(tri) {
     if (tri.length != 3) throw new Error("triplet expected, got ${tri.length} items instead");
     if (typeof(tri) === 'string') {
-        // console.log("string tri",tri)
         tri = new TextEncoder().encode(tri.substring(0,3));
-        // console.log("encoded tri",tri);
     }
 
     return tri;

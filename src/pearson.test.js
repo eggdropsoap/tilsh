@@ -88,10 +88,7 @@ describe('pearson.next', () => {
             const tri1 = enc.encode(win1);
             const win2 = e.text.substring(start,start+offset);
             const tri2 = enc.encode(win2);
-            // console.log(win1);
-            // console.log(tri1);
-            // console.log(win2);
-            // console.log(tri2);
+
             const originalArr = classic(1,tri1);
             const refactoredArr = next(1,tri2);
             expect(originalArr).toBe(refactoredArr);

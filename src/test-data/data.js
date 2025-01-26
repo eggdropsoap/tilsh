@@ -42,7 +42,7 @@ M5,5 v10 h10 v-10 h-2 v8 h-2 v-6 h-2 v6 h-2 v-8 z" fill="white" fill-opacity="1"
     }
 ]
 
-let cppReferenceTestData = [];
+const cppReferenceTestData = [];
 
 const testdir = "./c-ref/tlsh/Testing/example_data/";
 const hashpath = `./c-ref/tlsh/Testing/tmp/out.parts.`;
