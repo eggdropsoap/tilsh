@@ -11,9 +11,9 @@ const digestBodyLength = {  // in bytes, not hex
 }
 const digestByteLength = digestBodyLength.original;
 const bucketArraySize = digestByteLength * 4;
-// const bucketArraySize = 256;
+// const bucketArraySize = 256;     // not yet implemented in reference spec
 
-let minSize = oldStyle ? conservativeMinInputSize : defaultMinInputSize;
+const minSize = oldStyle ? conservativeMinInputSize : defaultMinInputSize;
 
 const windowSize = 5;
 
@@ -21,7 +21,7 @@ export default function hash (s) {
     // const versionMark = "T1";
     const u8array = (typeof(s) == 'string') ? new TextEncoder().encode(s) : new Uint8Array(s);
     const inputLength = u8array.length;
-    if (inputLength < minSize) throw new Error(
+    if (inputLength < minSize) throw new LengthError(
         `Input byte length too small: ${inputLength} < ${minSize}`
     );
     // console.log(`u8array\n[ ${u8array} ]\n`);
@@ -115,7 +115,7 @@ function headerVersion (version) {
 }
 
 function QRatios (q1,q2,q3) {
-    if (q3 == 0) throw new Error("Insufficient complexity");
+    if (q3 == 0) throw new ComplexityError(); // ("Insufficient complexity");
 
     const q1_ratio = Math.floor(q1*100/q3) % 16;
     const q2_ratio = Math.floor(q2*100/q3) % 16;
@@ -230,4 +230,17 @@ function quartiles (bi) {
     return [q1, q2, q3];
 }
 
-export { hash, minSize };
+class ComplexityError extends Error {
+    constructor (message, options) {
+        if (! message) message = "Insufficient complexity";
+        super(message,options);
+    }
+}
+class LengthError extends Error {
+    constructor (message, options) {
+        if (! message) message = "Insufficient complexity";
+        super(message,options);
+    }
+}
+
+export { hash, minSize, ComplexityError, LengthError };

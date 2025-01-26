@@ -1,8 +1,8 @@
 import { expect, test, describe } from 'vitest';
-import { hash, minSize }  from './tlsh.js';
+import { hash, minSize, ComplexityError, LengthError }  from './tlsh.js';
 
-// import testData from './test-data/data.js';
-import { cppTestData as testData } from './test-data/data.js';
+import testData from './test-data/data.js';
+// import { cppTestData as testData } from './test-data/data.js';
 
 const t1HeaderLen = 'T1xxyyzz'.length;
 const oldHeaderLen = 'xxyyzz'.length;
@@ -58,7 +58,7 @@ describe(`Hashes test data correctly`, () => {
             d.tlsh.slice(-oldDigestLen).toLowerCase()
         );
     });    
-    test.only.each(testData)
+    test.each(testData)
     ('whole hash ($name)', (d) => {
         expect(
             hash(d.text).toLowerCase()
@@ -69,13 +69,16 @@ describe(`Hashes test data correctly`, () => {
 })
 
 describe(`Error checking`, () => {
-    test(`Throws error if input is smaller than ${minSize} bytes`, () => {
-        expect(() => hash("a".repeat(minSize-1))).to.throw('byte length too small');
+    test(`Throws a LengthError if input is smaller than ${minSize} bytes`, () => {
+        expect(() => hash("a".repeat(minSize-1))).to.throw(LengthError);
     });
     
-    test.skip(`Does not throw error if input is equal or greater than ${minSize} bytes`, () => {
-        expect(() => hash("a".repeat(minSize))).to.not.throw();
-        expect(() => hash("a".repeat(minSize+1))).to.not.throw();
-        expect(() => hash("a".repeat(minSize-1))).to.throw();
+    test(`Does not throw LengthError if input is equal or greater than ${minSize} bytes`, () => {
+        expect(() => hash("a".repeat(minSize  ))).to.not.throw(LengthError);
+        expect(() => hash("a".repeat(minSize+1))).to.not.throw(LengthError);
+    })
+    test(`Does throw ComplexityError if input is repetitive`, () => {
+        expect(() => hash("a".repeat(minSize  ))).to.throw(ComplexityError);
+        expect(() => hash("a".repeat(minSize+1))).to.throw(ComplexityError);
     })
 })
