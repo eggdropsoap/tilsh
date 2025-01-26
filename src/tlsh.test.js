@@ -1,8 +1,13 @@
 import { expect, test, describe } from 'vitest';
 import { hash, minSize, ComplexityError, LengthError }  from './tlsh.js';
 
-import testData from './test-data/data.js';
-// import { cppTestData as testData } from './test-data/data.js';
+// import testData from './test-data/data.js';
+import { CppTestData } from './test-data/data.js';
+
+const limit = 3;
+const subset = 'ascii';
+const testData = CppTestData.length > limit ? new CppTestData({subset: subset, limit: limit}) : new CppTestData();
+
 
 const t1HeaderLen = 'T1xxyyzz'.length;
 const oldHeaderLen = 'xxyyzz'.length;
@@ -72,12 +77,12 @@ describe(`Error checking`, () => {
     test(`Throws a LengthError if input is smaller than ${minSize} bytes`, () => {
         expect(() => hash("a".repeat(minSize-1))).to.throw(LengthError);
     });
-    
     test(`Does not throw LengthError if input is equal or greater than ${minSize} bytes`, () => {
         expect(() => hash("a".repeat(minSize  ))).to.not.throw(LengthError);
         expect(() => hash("a".repeat(minSize+1))).to.not.throw(LengthError);
     })
-    test(`Does throw ComplexityError if input is repetitive`, () => {
+    
+    test(`Throws ComplexityError if input is simple`, () => {
         expect(() => hash("a".repeat(minSize  ))).to.throw(ComplexityError);
         expect(() => hash("a".repeat(minSize+1))).to.throw(ComplexityError);
     })

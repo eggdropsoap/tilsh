@@ -1,7 +1,43 @@
 import * as fs from 'fs';
 import chardet from 'chardet';
 
-const testData = [
+class CppTestData {
+    static testdir = "./c-ref/tlsh/Testing/example_data/";
+    static hashpath = `./c-ref/tlsh/Testing/tmp/out.parts.`;
+    static fullFileList = fs.readdirSync(CppTestData.testdir);
+    static testData = ConstructTestData(
+        CppTestData.fullFileList,
+        CppTestData.testdir,
+        CppTestData.hashpath
+    );
+    static length = CppTestData.testData.length;
+    constructor({limit = false, subset} = {}) {
+        const data = CppTestData.testData;
+        let result;
+        switch (subset) {
+            case subsetList[0].name:
+                result = data.filter((e) => subsetList[0].filter.includes(e.name));
+                break;
+            case subsetList[1].name:
+                result = data.filter((e) => subsetList[1].filter.includes(e.name));
+                break;
+            case subsetList[2].name:
+                result = data.filter((e) => subsetList[2].filter.includes(e.name));
+                break;
+            case subsetList[3].name:
+                result = data.filter((e) => subsetList[3].filter.includes(e.name));
+                break;
+            case subsetList[4].name:
+                result = data.filter((e) => subsetList[4].filter.includes(e.name));
+                break;
+            default:
+                result = data;
+        }
+        return limit ? result.slice(0,limit) : result;
+    }
+}
+
+const SVGTestData = [
     {
         name: "SVG 1",
         text: `
@@ -42,13 +78,6 @@ M5,5 v10 h10 v-10 h-2 v8 h-2 v-6 h-2 v6 h-2 v-8 z" fill="white" fill-opacity="1"
     }
 ]
 
-const cppReferenceTestData = [];
-
-const testdir = "./c-ref/tlsh/Testing/example_data/";
-const hashpath = `./c-ref/tlsh/Testing/tmp/out.parts.`;
-
-const fullFileList = fs.readdirSync(testdir);
-
 const nonAsciiList = [
     'MEDT6491.txt', // MED_Song
     'Week3.txt', // data
@@ -71,6 +100,7 @@ const cleanAsciiList = [
     'ledger091505.txt', // ASCII text, with very long lines (2523)
     'small.txt', // ASCII text
 ]
+const fullAsciiList = cleanAsciiList; // placeholder
 
 const passingAsciiList = [
     '2006-07_Resource_Brochure.txt', // ASCII text
@@ -85,64 +115,84 @@ const smallMixedList = [
     'small2.txt', // Unicode text, UTF-8 text
 ]
 
-// const fileList = passingAsciiList;
-// const fileList = cleanAsciiList;
-// const fileList = nonAsciiList;
-// const fileList = smallMixedList;
-const fileList = fullFileList;
-
-
-function readTestText(filename,detect=false,buffer=false) {
-    const filepath = testdir + filename;
-
-    if (detect) {
-        // attempt to sniff the data encoding
-        const encoding = chardet.detectFileSync(filepath);
-        console.log(`${filename}: ${encoding}`);
-        const dec = new TextDecoder(encoding)
-        // note that reference test data encoding is windows-1252
-        const buffer = fs.readFileSync(filepath);
-        const content = dec.decode(buffer);
-        console.warn("detect",buffer.length,content.length);
-        // return dec.decode(content);
-        return content;
+const subsetList = [
+    {
+        name: 'ascii',
+        filter: fullAsciiList   // todo: inline all of these
+    },
+    {
+        name: 'simple-ascii',
+        filter: passingAsciiList
+    },
+    {
+        name: 'clean-ascii',
+        filter: cleanAsciiList
+    },
+    {
+        name: 'non-ascii',
+        filter: nonAsciiList
+    },
+    {
+        name: 'small',
+        filter: smallMixedList
     }
-    else if (buffer) {
+]
+
+function readTestText(filename,path,detect=false,buffer=false) {
+    const filepath = path + filename;
+
+    // if (detect) {
+    //     // attempt to sniff the data encoding
+    //     const encoding = chardet.detectFileSync(filepath);
+    //     // console.log(`${filename}: ${encoding}`);
+    //     const dec = new TextDecoder(encoding)
+    //     // note that reference test data encoding is windows-1252
+    //     const buffer = fs.readFileSync(filepath);
+    //     const content = dec.decode(buffer);
+    //     // console.warn("detect",buffer.length,content.length);
+    //     // return dec.decode(content);
+    //     return content;
+    // }
+    // else if (buffer) {
         const result = fs.readFileSync(filepath);
-        console.warn("buffer",result.length);
+        // console.warn("buffer",result.length);
         return result;
-    }
-    else {
-        const content = fs.readFileSync(filepath,'binary');
-        // console.warn(typeof(buffer));
-        // const content = dec.decode(buffer);
-        // return dec.decode(content);
-        console.log("content",content.length)
-        return content;
-    }
+    // }
+    // else {
+    //     const content = fs.readFileSync(filepath,'binary');
+    //     // console.warn(typeof(buffer));
+    //     // const content = dec.decode(buffer);
+    //     // return dec.decode(content);
+    //     // console.log("content",content.length)
+    //     return content;
+    // }
 }
-function readTestHash(filename) {
-    const filepath = hashpath + filename;
+function readTestHash(filename,path) {
+    const filepath = path + filename;
     const hash = fs.readFileSync(filepath,'ascii');
     return hash.split('\n')[0].trim();
 }
 
-fileList.forEach( (filename) => {
-    const text = readTestText(filename,false,true);
-    const hash = readTestHash(filename);
-    // const decoder = new TextDecoder();
+function ConstructTestData (filelist,textpath,hashpath) {
+    const data = [];
+    filelist.forEach( (filename) => {
+        // const text = readTestText(filename,textpath,false,true);
+        const text = readTestText(filename,textpath);
+        const hash = readTestHash(filename,hashpath);
+        // const decoder = new TextDecoder();
+    
+        data.push({
+            name: filename,
+            text: text,
+            tlsh: hash
+        })
+    });
+    return data;
+};
 
-    cppReferenceTestData.push({
-        name: filename,
-        text: text,
-        tlsh: hash
-    })
-});
 
-const cppTestData = cppReferenceTestData;
-console.log(cppTestData.slice(0,1));
-// const cppTestData = cppReferenceTestData.slice(0,3);
-// console.warn(cppReferenceTestData);
-
-export default testData;
-export { testData, cppTestData };
+export default SVGTestData;
+export {
+    SVGTestData,
+    CppTestData
+};

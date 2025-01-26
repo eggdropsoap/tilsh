@@ -1,6 +1,8 @@
 import { describe, test, expect, bench } from 'vitest'
 import { pearson, classic, next } from './pearson.js'
-import testData from './test-data/data.js'
+import { SVGTestData } from './test-data/data.js'
+
+// const testData = new CppTestData({limit:10});
 
 const headerLength = 'T1xxyyzz'.length;
 const offset = 3;
@@ -83,7 +85,7 @@ describe('pearson.next', () => {
     test(`pearson next and classic should be the same`, () => {
         const enc = new TextEncoder();
         const start = 282;
-        for (const e of testData) {
+        for (const e of SVGTestData) {
             const win1 = e.text.substring(start,start+offset);
             const tri1 = enc.encode(win1);
             const win2 = e.text.substring(start,start+offset);
