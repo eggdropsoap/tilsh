@@ -1,11 +1,15 @@
 {
 	"name": "tilsh",
 	"version": "0.1.0",
-	"description": "tilsh implements the TLSH locality-sensitive hash / similarity hash algorithm",
+	"description": "tilsh implements the TLSH locality-sensitive hash algorithm suite",
 	"keywords": [
 		"TLSH",
 		"simhash",
-		"LSH"
+		"lsh",
+		"document similarity",
+		"similarity",
+		"fuzzy search",
+		"distance"
 	],
 	"homepage": "https://github.com/eggdropsoap/tilsh#readme",
 	"bugs": "https://github.com/eggdropsoap/tilsh/issues",
