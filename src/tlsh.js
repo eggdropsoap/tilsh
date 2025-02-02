@@ -10,7 +10,7 @@ const digestBodyLength = {  // in bytes, not hex
 }
 
 class TLSH {
-    static HashVersion = 1;
+    static HashVersion = TLSHVersion;   // may be computed in future
     static options = {
         supported: [
             'versionmark',
@@ -18,9 +18,9 @@ class TLSH {
             // 'checksum',
             // 'windowsize',
             'conservative',
-            // 'buckets48', // for feature parity with c++ compile option
+            // 'buckets48', // outdated, but for feature parity with c++ compile options
             'oldstyle',  // a preset
-            // 'version',   // for future hash versions T2+ and implementing version selection
+            'version',   // for future hash versions T2+ and implementing version selection
         ],
         validation: {
             versionmark: [true,false],
@@ -30,31 +30,22 @@ class TLSH {
             conservative: [true,false],
             // buckets48: [true,false],
             oldstyle: [true,false],
-            // version: [1]
+            version: [1]
         }
     }
     constructor(
         {
-            versionmark = true,     // default: include 'T1' version tag on hash outputs
-            hashbytes = 32,         // 32 [default] or 64 bytes
-            checksum = 1,           // 1 [default], 0, or 3 bytes   // option not implemented
-            windowsize = 5,         // 5 [default]                  // option not implemented
-            conservative = false,   // default: min input length 50, true: min input length 256
-            oldstyle = false,       // true activates preset: {hashbytes: 32, checksum: 1, conservative: true, versionmark: false}
+            version = TLSH.HashVersion, // default: current highest TLSH format version
+            versionmark = true,         // default: include 'T1' version tag on hash outputs
+            hashbytes = 32,             // 32 [default] or 64 bytes
+            checksum = 1,               // 1 [default], 0, or 3 bytes   // option not implemented
+            windowsize = 5,             // 5 [default]                  // option not implemented
+            conservative = false,       // default: min input length 50, true: min input length 256
+            oldstyle = false,           // true activates preset: {hashbytes: 32, checksum: 1, conservative: true, versionmark: false}
         } = {}
     ) {
-        const errorContext = 'TLSH constructor';
-        const errorList = []
-        // check for unimplemented options being used
-        Object.keys(arguments[0] || {}).forEach( k => {
-            if (! TLSH.options.supported.includes(k) ) errorList.push(k);
-        });
-        if (errorList.length > 0) throw new NotImplementedError(`${errorContext} options: ${errorList.join(', ')}`);
-        // check for illegal option values
-        Object.entries(TLSH.options.validation).forEach( ([opt, vals]) => {
-            if (! vals.includes(eval(opt))) errorList.push(`${opt}: ${eval(opt)}`);
-        })
-        if ( errorList.length > 0 ) throw new InvalidOptionsError(`${errorContext}: ${errorList.join(', ')}`);
+        // throw structured errors on invalid values and hard-unsupported keys
+        validateArgs(arguments);
         
         // set up class properties
         if (oldstyle) {
@@ -64,11 +55,29 @@ class TLSH {
             conservative = true,
             versionmark = false
         }
+        this.formatVersion = version;
         this.useVersionMark = versionmark;
         this.minSize = conservative ? conservativeMinInputSize : defaultMinInputSize;
         this.digestByteLength = hashbytes == 32 ? digestBodyLength.standard : digestBodyLength.expanded;
         this.bucketArraySize = this.digestByteLength * 4;
         this.windowSize = 5;
+
+        function validateArgs(args) {
+            const errorContext = 'TLSH constructor';
+            const errorList = []
+
+            // check for unimplemented options being used
+            Object.keys(args[0] || {}).forEach( k => {
+                if (! TLSH.options.supported.includes(k) ) errorList.push(k);
+            });
+            if (errorList.length > 0) throw new NotImplementedError(`${errorContext} options: ${errorList.join(', ')}`);
+
+            // check for illegal option values
+            Object.entries(TLSH.options.validation).forEach( ([opt, vals]) => {
+                if (! vals.includes(eval(opt))) errorList.push(`${opt}: ${eval(opt)}`);
+            })
+            if ( errorList.length > 0 ) throw new InvalidOptionsError(`${errorContext}: ${errorList.join(', ')}`);    
+        }
     }
 
     hash (s) {

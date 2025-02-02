@@ -96,15 +96,16 @@ describe('Configuration options', () => {
     test('oldstyle hash is correct', () => {
         expect(oldstyleHash).toBe(data1.lsh.slice(-oldDigestLen));
     })
+
+    const t = new TLSH({oldstyle:true});
     test('oldstyle reports min input length of 256', () => {
-        const t = new TLSH({oldstyle:true});
         expect(t.minSize).toBe(256);
     })
     test('oldstyle enforces minimum input length of 256', () => {
         const input = SVGTestData[0].text.substring(0,255);
         expect(
             () => {
-                new TLSH({oldstyle: true}).hash(input)
+                t.hash(input)
             }
         ).to.throw(LengthError);
     })
@@ -127,7 +128,7 @@ describe(`Error checking`, () => {
     test.each([
         {hashbytes: 40},
         {versionmark: 2},
-        {hashbytes: 40, versionmark: 2},
+        {hashbytes: 40, versionmark: 2, version: true},
     ])
     ('Throws InvalidOptionsError for supported options with invalid values (%s)', (opts) => {
         expect(() => {new TLSH(opts)}).to.throw(InvalidOptionsError);
@@ -136,7 +137,7 @@ describe(`Error checking`, () => {
         expect(() => {new TLSH({hashbytes: 40, versionmark: 2})}).to.throw(/(?=.*hashbytes)(?=.*versionmark)/);
     })
 
-    test.each(['checksum','windowsize','buckets48','version'])
+    test.each(['checksum','windowsize','buckets48'])
     (`Throws NotImplementedError for unimplemented constructor option (%s)`, (opt) => {
         expect( () => {
             if (TLSH.options.supported.includes(opt)) throw new Error(`${opt} option is implemented`)
