@@ -19,7 +19,7 @@ class TLSH {
             // 'windowsize',
             'conservative',
             // 'buckets48', // for feature parity with c++ compile option
-            // 'oldstyle',  // a preset
+            'oldstyle',  // a preset
             // 'version',   // for future hash versions T2+ and implementing version selection
         ],
         validation: {
@@ -58,7 +58,7 @@ class TLSH {
         
         // set up class properties
         if (oldstyle) {
-            // preset to options equivalent to c++ reference's version 3.17.0
+            // preset to options equivalent to c++ reference's version ~3.17.0
             hashbytes = 32,
             checksum = 1,
             conservative = true,
@@ -264,4 +264,4 @@ class NotImplementedError extends Error {
 }
 
 export default TLSH;
-export { TLSH, ComplexityError, LengthError, NotImplementedError, InvalidOptionsError };
+export { TLSH, ComplexityError, LengthError, InvalidOptionsError, NotImplementedError };

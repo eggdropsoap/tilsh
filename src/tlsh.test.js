@@ -77,15 +77,36 @@ describe(`Hashes test data correctly`, () => {
 })
 
 describe('Configuration options', () => {
-    test.each([SVGTestData[0]])
-    ('supports hashes without version marker ($name)', (d) => {
+    const data1 = SVGTestData[0];
+
+    test('supports hashes without version marker', () => {
         const t = new TLSH({versionmark: false});
-        // const h = t.hash(d.text).slice(-oldDigestLen).toLowerCase();
         expect(
-            t.hash(d.text).slice(-oldDigestLen).toLowerCase()
+            t.hash(data1.text).slice(-oldDigestLen).toLowerCase()
         ).toBe(
-            d.lsh.slice(-oldDigestLen).toLowerCase()
+            data1.lsh.slice(-oldDigestLen).toLowerCase()
         );
+    })
+
+    const oldstyleHash = new TLSH({oldstyle: true}).hash(data1.text);
+    test('oldstyle hash is 70 characters', () => {
+        expect(oldstyleHash).toBeTypeOf('string');
+        expect(oldstyleHash.length).toBe(70);
+    })
+    test('oldstyle hash is correct', () => {
+        expect(oldstyleHash).toBe(data1.lsh.slice(-oldDigestLen));
+    })
+    test('oldstyle reports min input length of 256', () => {
+        const t = new TLSH({oldstyle:true});
+        expect(t.minSize).toBe(256);
+    })
+    test('oldstyle enforces minimum input length of 256', () => {
+        const input = SVGTestData[0].text.substring(0,255);
+        expect(
+            () => {
+                new TLSH({oldstyle: true}).hash(input)
+            }
+        ).to.throw(LengthError);
     })
 })
 
@@ -115,7 +136,7 @@ describe(`Error checking`, () => {
         expect(() => {new TLSH({hashbytes: 40, versionmark: 2})}).to.throw(/(?=.*hashbytes)(?=.*versionmark)/);
     })
 
-    test.each(['checksum','windowsize','oldstyle'])
+    test.each(['checksum','windowsize','buckets48','version'])
     (`Throws NotImplementedError for unimplemented constructor option (%s)`, (opt) => {
         expect( () => {
             if (TLSH.options.supported.includes(opt)) throw new Error(`${opt} option is implemented`)
