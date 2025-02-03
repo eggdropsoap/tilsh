@@ -26,7 +26,7 @@ function validateTri(tri) {
     return tri;
 }
 
-export function classic(salt,tri) {
+function classic(salt,tri) {
     tri = validateTri(tri);
 
     let h = 0;
@@ -38,7 +38,7 @@ export function classic(salt,tri) {
     return h;
 }
 
-export default function next (salt,tri) {
+function next (salt,tri) {
     let h = 0;
     // const t = table;
 
@@ -48,4 +48,5 @@ export default function next (salt,tri) {
 }
 
 const pearson = next;
+export default pearson;
 export { pearson, classic, next }
